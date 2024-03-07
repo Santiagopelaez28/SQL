@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.1
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 07-03-2024 a las 03:14:50
--- Versión del servidor: 10.4.20-MariaDB
--- Versión de PHP: 8.0.8
+-- Tiempo de generación: 07-03-2024 a las 13:47:11
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -31,7 +31,7 @@ CREATE TABLE `cargo` (
   `cod_cargo` int(11) NOT NULL,
   `nombre_cargo` varchar(25) NOT NULL,
   `salario` decimal(10,0) NOT NULL CHECK (`salario` >= 900000)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -43,7 +43,7 @@ CREATE TABLE `categoria` (
   `cod_categoria` int(11) NOT NULL,
   `nombre_categoria` varchar(50) NOT NULL,
   `observaciones` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -69,7 +69,7 @@ CREATE TABLE `cliente` (
   `tipo_cliente` enum('detallista','mayorista','empresarial') DEFAULT NULL,
   `activo` varchar(4) NOT NULL DEFAULT 'A',
   `empleado_cod` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -89,7 +89,7 @@ CREATE TABLE `contratista` (
   `direccion` varchar(50) NOT NULL,
   `telefono` varchar(25) NOT NULL,
   `camion` enum('camioneta','camion','furgon') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -106,7 +106,7 @@ CREATE TABLE `despachos` (
   `valor_flete` decimal(10,0) NOT NULL DEFAULT 0,
   `entregado` varchar(1) NOT NULL,
   `observaciones` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -135,7 +135,7 @@ CREATE TABLE `empleado` (
   `cesantias` enum('fna','porvenir','colfondos','proteccion') DEFAULT NULL,
   `banco` enum('BBVA','davivienda','bancolombia','caja social','popular',' av villas') DEFAULT NULL,
   `activo` varchar(4) NOT NULL DEFAULT 'A'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -149,7 +149,7 @@ CREATE TABLE `entrada_cabeza` (
   `proveedor_cod` int(11) NOT NULL,
   `empleado_cod` int(11) NOT NULL,
   `forma_pago` enum('efectivo','nequi','credito') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -164,7 +164,7 @@ CREATE TABLE `entrada_detalle` (
   `cantidad` int(11) NOT NULL,
   `valor_compra` decimal(10,0) NOT NULL DEFAULT 0,
   `subtotal` decimal(10,0) GENERATED ALWAYS AS (`valor_compra` * `cantidad`) VIRTUAL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -178,7 +178,7 @@ CREATE TABLE `factura_cabeza` (
   `cliente_cod` int(11) NOT NULL,
   `empleado_cod` int(11) NOT NULL,
   `forma_pago` enum('nequi','efectivo','credito') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -188,11 +188,14 @@ CREATE TABLE `factura_cabeza` (
 
 CREATE TABLE `factura_detalle` (
   `cod_facdetalle` int(11) NOT NULL,
-  `fecha_factura` date NOT NULL,
-  `cliente_cod` int(11) NOT NULL,
-  `empleado_cod` int(11) NOT NULL,
-  `forma_pago` enum('efectivo','nequi','credito') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `factura_cod` int(11) NOT NULL,
+  `producto_cod` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `valor_venta` decimal(10,0) NOT NULL DEFAULT 0,
+  `subtotal` decimal(10,0) GENERATED ALWAYS AS (`valor_venta` * `cantidad`) VIRTUAL,
+  `descuento` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `neto` decimal(10,0) GENERATED ALWAYS AS (`subtotal` * (1 - `descuento`)) VIRTUAL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -214,7 +217,7 @@ CREATE TABLE `nomina` (
   `prestamos_otros` decimal(10,0) NOT NULL DEFAULT 0,
   `total_deducido` decimal(10,0) NOT NULL,
   `neto_pagar` decimal(10,0) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -233,7 +236,7 @@ CREATE TABLE `productos` (
   `fecha_vencimiento` date NOT NULL,
   `categor_cod` int(11) NOT NULL,
   `proveedor_cod` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -252,7 +255,7 @@ CREATE TABLE `proveedor` (
   `asesor_comercial` varchar(50) NOT NULL,
   `telefono_asesor` varchar(25) NOT NULL,
   `e_mail_asesor` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Índices para tablas volcadas
@@ -334,8 +337,8 @@ ALTER TABLE `factura_cabeza`
 --
 ALTER TABLE `factura_detalle`
   ADD PRIMARY KEY (`cod_facdetalle`),
-  ADD KEY `cliente_cod` (`cliente_cod`),
-  ADD KEY `empleado_cod` (`empleado_cod`);
+  ADD KEY `factura_cod` (`factura_cod`),
+  ADD KEY `producto_cod` (`producto_cod`);
 
 --
 -- Indices de la tabla `nomina`
@@ -481,18 +484,11 @@ ALTER TABLE `entrada_detalle`
   ADD CONSTRAINT `entrada_detalle_ibfk_2` FOREIGN KEY (`producto_cod`) REFERENCES `productos` (`cod_producto`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `factura_cabeza`
---
-ALTER TABLE `factura_cabeza`
-  ADD CONSTRAINT `factura_cabeza_ibfk_1` FOREIGN KEY (`cliente_cod`) REFERENCES `cliente` (`cod_cliente`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `factura_cabeza_ibfk_2` FOREIGN KEY (`empleado_cod`) REFERENCES `empleado` (`cod_empleado`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
 -- Filtros para la tabla `factura_detalle`
 --
 ALTER TABLE `factura_detalle`
-  ADD CONSTRAINT `factura_detalle_ibfk_1` FOREIGN KEY (`cliente_cod`) REFERENCES `cliente` (`cod_cliente`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `factura_detalle_ibfk_2` FOREIGN KEY (`empleado_cod`) REFERENCES `empleado` (`cod_empleado`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `factura_detalle_ibfk_1` FOREIGN KEY (`factura_cod`) REFERENCES `factura_cabeza` (`cod_factura`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `factura_detalle_ibfk_2` FOREIGN KEY (`producto_cod`) REFERENCES `productos` (`cod_producto`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `nomina`
