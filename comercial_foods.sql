@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.1.1
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 07-03-2024 a las 13:58:18
--- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- Tiempo de generación: 08-03-2024 a las 03:32:11
+-- Versión del servidor: 10.4.20-MariaDB
+-- Versión de PHP: 8.0.8
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -31,7 +31,7 @@ CREATE TABLE `cargo` (
   `cod_cargo` int(11) NOT NULL,
   `nombre_cargo` varchar(25) NOT NULL,
   `salario` decimal(10,0) NOT NULL CHECK (`salario` >= 900000)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -43,7 +43,7 @@ CREATE TABLE `categoria` (
   `cod_categoria` int(11) NOT NULL,
   `nombre_categoria` varchar(50) NOT NULL,
   `observaciones` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -69,7 +69,7 @@ CREATE TABLE `cliente` (
   `tipo_cliente` enum('detallista','mayorista','empresarial') DEFAULT NULL,
   `activo` varchar(4) NOT NULL DEFAULT 'A',
   `empleado_cod` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -89,7 +89,7 @@ CREATE TABLE `contratista` (
   `direccion` varchar(50) NOT NULL,
   `telefono` varchar(25) NOT NULL,
   `camion` enum('camioneta','camion','furgon') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -106,7 +106,7 @@ CREATE TABLE `despachos` (
   `valor_flete` decimal(10,0) NOT NULL DEFAULT 0,
   `entregado` varchar(1) NOT NULL,
   `observaciones` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -124,6 +124,7 @@ CREATE TABLE `empleado` (
   `no_documento` varchar(25) NOT NULL,
   `sexo` enum('masculino','femenino') DEFAULT NULL,
   `direccion` varchar(50) NOT NULL,
+  `ciudad` varchar(20) NOT NULL,
   `edad` int(11) NOT NULL CHECK (`edad` >= 18),
   `telefono` varchar(25) NOT NULL,
   `fecha_ingreso` date DEFAULT curdate(),
@@ -135,7 +136,7 @@ CREATE TABLE `empleado` (
   `cesantias` enum('fna','porvenir','colfondos','proteccion') DEFAULT NULL,
   `banco` enum('BBVA','davivienda','bancolombia','caja social','popular',' av villas') DEFAULT NULL,
   `activo` varchar(4) NOT NULL DEFAULT 'A'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -149,7 +150,7 @@ CREATE TABLE `entrada_cabeza` (
   `proveedor_cod` int(11) NOT NULL,
   `empleado_cod` int(11) NOT NULL,
   `forma_pago` enum('efectivo','nequi','credito') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -164,7 +165,7 @@ CREATE TABLE `entrada_detalle` (
   `cantidad` int(11) NOT NULL,
   `valor_compra` decimal(10,0) NOT NULL DEFAULT 0,
   `subtotal` decimal(10,0) GENERATED ALWAYS AS (`valor_compra` * `cantidad`) VIRTUAL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -178,7 +179,7 @@ CREATE TABLE `factura_cabeza` (
   `cliente_cod` int(11) NOT NULL,
   `empleado_cod` int(11) NOT NULL,
   `forma_pago` enum('nequi','efectivo','credito') DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -195,7 +196,7 @@ CREATE TABLE `factura_detalle` (
   `subtotal` decimal(10,0) GENERATED ALWAYS AS (`valor_venta` * `cantidad`) VIRTUAL,
   `descuento` decimal(10,2) NOT NULL DEFAULT 0.00,
   `neto` decimal(10,0) GENERATED ALWAYS AS (`subtotal` * (1 - `descuento`)) VIRTUAL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -217,7 +218,7 @@ CREATE TABLE `nomina` (
   `prestamos_otros` decimal(10,0) NOT NULL DEFAULT 0,
   `total_deducido` decimal(10,0) NOT NULL,
   `neto_pagar` decimal(10,0) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -236,7 +237,7 @@ CREATE TABLE `productos` (
   `fecha_vencimiento` date NOT NULL,
   `categor_cod` int(11) NOT NULL,
   `proveedor_cod` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -255,7 +256,7 @@ CREATE TABLE `proveedor` (
   `asesor_comercial` varchar(50) NOT NULL,
   `telefono_asesor` varchar(25) NOT NULL,
   `e_mail_asesor` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Índices para tablas volcadas
