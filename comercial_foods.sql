@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 21-03-2024 a las 16:07:54
+-- Tiempo de generación: 25-04-2024 a las 17:00:00
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -42,6 +42,40 @@ INSERT INTO `cargo` (`cod_cargo`, `nombre_cargo`, `salario`) VALUES
 (2, 'Vendedor', 1800000),
 (3, 'Contador', 2500000),
 (4, 'Facturador', 1200000);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `cartera`
+--
+
+CREATE TABLE `cartera` (
+  `cod_factura` int(11) NOT NULL DEFAULT 0,
+  `cliente_cod` int(11) NOT NULL,
+  `fecha_factura` date NOT NULL,
+  `forma_pago` enum('nequi','efectivo','credito') DEFAULT NULL,
+  `Total_neto` decimal(32,0) DEFAULT NULL,
+  `fecha_vcto` date DEFAULT (`fecha_factura` + interval 30 day),
+  `dias_mora` int(11) DEFAULT timestampdiff(DAY,`fecha_vcto`,curdate()),
+  `abono` decimal(10,0) DEFAULT 0,
+  `saldo` decimal(10,0) GENERATED ALWAYS AS (`Total_neto` - `abono`) VIRTUAL,
+  `pagada` varchar(5) DEFAULT 'N'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `cartera`
+--
+
+INSERT INTO `cartera` (`cod_factura`, `cliente_cod`, `fecha_factura`, `forma_pago`, `Total_neto`, `fecha_vcto`, `dias_mora`, `abono`, `pagada`) VALUES
+(10, 9, '2023-08-08', 'credito', 281700, '2023-09-07', 231, 0, 'N'),
+(11, 9, '2023-08-08', 'credito', 523500, '2023-09-07', 231, 0, 'N'),
+(12, 10, '2023-08-08', 'credito', 782000, '2023-09-07', 231, 0, 'N'),
+(13, 10, '2023-08-09', 'credito', 570300, '2023-09-08', 230, 0, 'N'),
+(19, 13, '2023-08-12', 'credito', 416250, '2023-09-11', 227, 0, 'N'),
+(20, 14, '2023-08-13', 'credito', 841950, '2023-09-12', 226, 0, 'N'),
+(30, 9, '2023-08-18', 'credito', 28000, '2023-09-17', 221, 0, 'N'),
+(34, 8, '2023-08-19', 'credito', 285750, '2023-09-18', 220, 0, 'N'),
+(39, 12, '2023-08-22', 'credito', 1046200, '2023-09-21', 217, 0, 'N');
 
 -- --------------------------------------------------------
 
@@ -171,8 +205,8 @@ CREATE TABLE `despachos` (
 --
 
 INSERT INTO `despachos` (`cod_despacho`, `contratista_cod`, `factura_cod`, `fecha_recibo`, `fecha_entrega`, `valor_flete`, `entregado`, `observaciones`) VALUES
-(1, 1, 1, '2023-08-06', '2023-08-07', 200000, 's', 'Completo'),
-(2, 1, 2, '2023-08-06', '2023-08-07', 200000, 's', 'Completo'),
+(1, 1, 1, '2023-08-06', '2023-08-07', 200000, 'n', 'Completo'),
+(2, 1, 2, '2023-08-06', '2023-08-07', 200000, 'n', 'Completo'),
 (3, 2, 3, '2023-08-06', '2023-08-07', 200000, 's', 'Completo'),
 (4, 2, 4, '2023-08-06', '2023-08-07', 200000, 's', 'Completo'),
 (5, 3, 5, '2023-08-06', '2023-08-07', 200000, 's', 'Completo'),
@@ -183,35 +217,35 @@ INSERT INTO `despachos` (`cod_despacho`, `contratista_cod`, `factura_cod`, `fech
 (10, 5, 10, '2023-08-07', '2023-08-07', 270000, 's', 'Completo'),
 (11, 6, 11, '2023-08-08', '2023-08-08', 320000, 's', 'Completo'),
 (12, 7, 12, '2023-08-08', '2023-08-08', 220000, 's', 'Completo'),
-(13, 1, 13, '2023-08-09', '2023-08-09', 350000, 's', 'Completo'),
+(13, 1, 13, '2023-08-09', '2023-08-09', 350000, 'n', 'Completo'),
 (14, 2, 14, '2023-08-09', '2023-08-09', 280000, 's', 'Completo'),
 (15, 3, 15, '2023-08-10', '2023-08-10', 330000, 's', 'Completo'),
 (16, 4, 16, '2023-08-10', '2023-08-10', 265000, 's', 'Completo'),
 (17, 5, 17, '2023-08-10', '2023-08-10', 320000, 's', 'Completo'),
 (18, 6, 18, '2023-08-10', '2023-08-10', 280000, 's', 'Completo'),
 (19, 7, 19, '2023-08-10', '2023-08-10', 260000, 's', 'Completo'),
-(20, 1, 20, '2023-08-10', '2023-08-10', 370000, 's', 'Completo'),
+(20, 1, 20, '2023-08-10', '2023-08-10', 370000, 'n', 'Completo'),
 (21, 2, 21, '2023-08-11', '2023-08-11', 230000, 's', 'Completo'),
 (22, 3, 22, '2023-08-11', '2023-08-11', 240000, 's', 'Completo'),
 (23, 4, 23, '2023-08-11', '2023-08-11', 270000, 's', 'Completo'),
 (24, 5, 24, '2023-08-11', '2023-08-11', 240000, 's', 'Completo'),
 (25, 6, 25, '2023-08-12', '2023-08-12', 250000, 's', 'Completo'),
 (26, 7, 26, '2023-08-12', '2023-08-12', 260000, 's', 'Completo'),
-(27, 1, 21, '2023-08-13', '2023-08-13', 320000, 's', 'Completo'),
+(27, 1, 21, '2023-08-13', '2023-08-13', 320000, 'n', 'Completo'),
 (28, 2, 22, '2023-08-13', '2023-08-13', 300000, 's', 'Completo'),
 (29, 3, 23, '2023-08-13', '2023-08-13', 310000, 's', 'Completo'),
 (30, 4, 24, '2023-08-13', '2023-08-13', 310000, 's', 'Completo'),
 (31, 5, 25, '2023-08-13', '2023-08-13', 230000, 's', 'Completo'),
 (32, 6, 26, '2023-08-14', '2023-08-14', 250000, 's', 'Completo'),
 (33, 7, 27, '2023-08-14', '2023-08-14', 260000, 's', 'Completo'),
-(34, 1, 28, '2023-08-14', '2023-08-14', 270000, 's', 'Completo'),
+(34, 1, 28, '2023-08-14', '2023-08-14', 270000, 'n', 'Completo'),
 (35, 2, 29, '2023-08-15', '2023-08-15', 290000, 's', 'Completo'),
 (36, 3, 30, '2023-08-15', '2023-08-15', 300000, 's', 'Completo'),
 (37, 4, 31, '2023-08-15', '2023-08-15', 320000, 's', 'Completo'),
 (38, 5, 32, '2023-08-15', '2023-08-15', 280000, 's', 'Completo'),
 (39, 6, 33, '2023-08-15', '2023-08-15', 350000, 's', 'Completo'),
 (40, 7, 34, '2023-08-15', '2023-08-15', 260000, 's', 'Completo'),
-(41, 1, 35, '2023-08-15', '2023-08-15', 320000, 's', 'Completo'),
+(41, 1, 35, '2023-08-15', '2023-08-15', 320000, 'n', 'Completo'),
 (42, 2, 36, '2023-08-16', '2023-08-16', 350000, 's', 'Completo'),
 (43, 3, 37, '2023-08-16', '2023-08-16', 400000, 's', 'Completo'),
 (44, 4, 38, '2023-08-16', '2023-08-16', 350000, 's', 'Completo'),
@@ -606,15 +640,15 @@ INSERT INTO `productos` (`cod_producto`, `descripcion`, `valor_compra`, `valor_v
 (2, 'Galletas Ducales taco', 7000, 8000, 5000, 4088, '2023-04-01', '2024-04-01', 3, 2),
 (3, 'Bom bom bum barrax50', 3000, 3800, 3500, 4081, '2023-05-01', '2024-05-01', 4, 3),
 (4, 'Pan Blanco tajado', 4500, 5500, 5500, 4080, '2023-02-01', '2024-02-01', 2, 4),
-(5, 'Salsa de tomate frasco', 6500, 7500, 6000, 4084, '2023-06-01', '2024-06-01', 5, 7),
+(5, 'Salsa de tomate frasco', 7150, 7500, 6000, 4084, '2023-06-01', '2024-06-01', 5, 7),
 (6, 'Jugo Fresa frasco', 2500, 3500, 6500, 4086, '2023-03-01', '2024-03-01', 6, 6),
 (7, 'Leche pasteurizada bsa', 4500, 5500, 7500, 4080, '2023-03-01', '2024-03-01', 1, 5),
 (8, 'Salchichas vaquera x pq', 5500, 6500, 8500, 4070, '2023-08-30', '2023-09-20', 7, 8),
 (9, 'Mortadela vaquera x pq', 7500, 8500, 9500, 4071, '2023-08-30', '2023-09-20', 7, 8),
 (10, 'Salchiperro vaquera x pq', 6500, 7500, 8500, 4072, '2023-08-30', '2023-09-20', 7, 8),
-(11, 'Salsa de soya frasco', 5500, 6500, 6500, 4079, '2023-08-20', '2024-09-20', 5, 7),
-(12, 'Salsa mayonesa frasco', 5500, 6500, 8000, 4079, '2023-08-20', '2024-09-20', 5, 7),
-(13, 'Salsa rosada frasco', 7500, 8500, 7600, 4079, '2023-08-20', '2024-09-20', 5, 7),
+(11, 'Salsa de soya frasco', 6050, 6500, 6500, 4079, '2023-08-20', '2024-09-20', 5, 7),
+(12, 'Salsa mayonesa frasco', 6050, 6500, 8000, 4079, '2023-08-20', '2024-09-20', 5, 7),
+(13, 'Salsa rosada frasco', 8250, 8500, 7600, 4079, '2023-08-20', '2024-09-20', 5, 7),
 (14, 'Galletas Recreo bsa', 9000, 10000, 8200, 4077, '2023-08-20', '2024-08-20', 3, 2),
 (15, 'Galletas Ducales taco', 7200, 8200, 9000, 4077, '2023-08-20', '2024-08-20', 3, 2),
 (16, 'Galletas Saltin taco', 8000, 9000, 10000, 4077, '2023-08-20', '2024-08-20', 3, 2),
@@ -695,6 +729,12 @@ INSERT INTO `tipomov` (`cod_tipomov`, `nombre_mov`) VALUES
 ALTER TABLE `cargo`
   ADD PRIMARY KEY (`cod_cargo`),
   ADD KEY `nombre_cargo` (`nombre_cargo`);
+
+--
+-- Indices de la tabla `cartera`
+--
+ALTER TABLE `cartera`
+  ADD PRIMARY KEY (`cod_factura`);
 
 --
 -- Indices de la tabla `categoria`
@@ -891,6 +931,12 @@ ALTER TABLE `tipomov`
 --
 -- Restricciones para tablas volcadas
 --
+
+--
+-- Filtros para la tabla `cartera`
+--
+ALTER TABLE `cartera`
+  ADD CONSTRAINT `fkcodfactura` FOREIGN KEY (`cod_factura`) REFERENCES `factura_cabeza` (`cod_factura`);
 
 --
 -- Filtros para la tabla `cliente`
