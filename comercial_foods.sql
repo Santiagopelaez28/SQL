@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 25-04-2024 a las 17:00:00
+-- Tiempo de generación: 02-05-2024 a las 17:03:47
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -20,6 +20,52 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `comercial_foods`
 --
+
+DELIMITER $$
+--
+-- Procedimientos
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `abono_factura` (IN `valor` DECIMAL(10,0), IN `nfact` INT)   BEGIN
+    UPDATE cartera 
+    SET abono = abono + valor
+    WHERE cod_factura = nfact;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `actualiza_credito` ()   BEGIN
+UPDATE cartera SET pagada='S'
+WHERE saldo <= 0;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `calcula_nomina` (IN `fechanom` DATE, IN `cod_emp` INT, IN `salario` DECIMAL(10,0), IN `diastb` INT, IN `nhrn` INT, IN `presta` DECIMAL(10,0))   BEGIN
+    DECLARE smiv DECIMAL(10,0);
+    DECLARE auxtte DECIMAL(10,0);
+    DECLARE subtte DECIMAL(10,0);
+    SET smiv = 1300000; -- Corregido el valor del salario mínimo legal vigente
+    SET auxtte = 162000;
+    
+    IF salario <= 2 * smiv THEN
+        SET subtte = auxtte / 30 * diastb;
+    ELSE
+        SET subtte = 0;
+    END IF;
+    
+    INSERT INTO nomina (fecha_nomina, empleado_cod, salario_base, dias_trabajados, auxilio_transporte, nro_hrecargo, prestamos)
+    VALUES (fechanom, cod_emp, salario, diastb, subtte, nhrn, presta);
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `consulta_ventaciudad` (IN `dato` VARCHAR(50))   BEGIN 
+SELECT * FROM cliente 
+WHERE ciudad = dato;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `contar_productos` (IN `dato` VARCHAR(50), OUT `total` INT UNSIGNED)   BEGIN
+	SET total = (
+        SELECT COUNT(*)
+        FROM productos
+        WHERE productos.proveedor_cod=dato);
+END$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -67,7 +113,7 @@ CREATE TABLE `cartera` (
 --
 
 INSERT INTO `cartera` (`cod_factura`, `cliente_cod`, `fecha_factura`, `forma_pago`, `Total_neto`, `fecha_vcto`, `dias_mora`, `abono`, `pagada`) VALUES
-(10, 9, '2023-08-08', 'credito', 281700, '2023-09-07', 231, 0, 'N'),
+(10, 9, '2023-08-08', 'credito', 281700, '2023-09-07', 231, 100000, 'N'),
 (11, 9, '2023-08-08', 'credito', 523500, '2023-09-07', 231, 0, 'N'),
 (12, 10, '2023-08-08', 'credito', 782000, '2023-09-07', 231, 0, 'N'),
 (13, 10, '2023-08-09', 'credito', 570300, '2023-09-08', 230, 0, 'N'),
@@ -599,18 +645,30 @@ INSERT INTO `factura_detalle` (`cod_facdetalle`, `factura_cod`, `producto_cod`, 
 CREATE TABLE `nomina` (
   `cod_nomina` int(11) NOT NULL,
   `fecha_nomina` date NOT NULL,
-  `empleado_cod` int(11) NOT NULL,
+  `empleado_cod` varchar(25) NOT NULL,
   `salario_base` decimal(10,0) NOT NULL DEFAULT 0,
   `dias_trabajados` int(11) NOT NULL,
-  `salario` decimal(10,0) NOT NULL,
+  `salario` decimal(10,0) GENERATED ALWAYS AS (`salario_base` / 30 * `dias_trabajados`) VIRTUAL,
   `auxilio_transporte` decimal(10,0) NOT NULL DEFAULT 0,
   `nro_hrecargo` int(11) DEFAULT 0,
-  `salud` decimal(10,0) NOT NULL,
-  `pension` decimal(10,0) NOT NULL,
-  `prestamos_otros` decimal(10,0) NOT NULL DEFAULT 0,
-  `total_deducido` decimal(10,0) NOT NULL,
-  `neto_pagar` decimal(10,0) NOT NULL
+  `recargo_noche` decimal(10,0) GENERATED ALWAYS AS (`salario_base` / 240 * `nro_hrecargo` * 1.35) VIRTUAL,
+  `total_devengado` decimal(10,0) GENERATED ALWAYS AS (`salario` + `auxilio_transporte` + `recargo_noche`) VIRTUAL,
+  `salud` decimal(10,0) GENERATED ALWAYS AS (`total_devengado` * 0.04) VIRTUAL,
+  `pension` decimal(10,0) GENERATED ALWAYS AS (`total_devengado` * 0.04) VIRTUAL,
+  `prestamos` decimal(10,0) NOT NULL DEFAULT 0,
+  `total_deducido` decimal(10,0) GENERATED ALWAYS AS (`salud` + `pension` + `prestamos`) VIRTUAL,
+  `neto_pagar` decimal(10,0) GENERATED ALWAYS AS (`total_devengado` - `total_deducido`) VIRTUAL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `nomina`
+--
+
+INSERT INTO `nomina` (`cod_nomina`, `fecha_nomina`, `empleado_cod`, `salario_base`, `dias_trabajados`, `auxilio_transporte`, `nro_hrecargo`, `prestamos`) VALUES
+(13, '2024-05-02', '1', 1300000, 30, 162000, 5, 110000),
+(14, '2024-05-02', '2', 1500000, 20, 108000, 10, 120000),
+(15, '2024-05-02', '3', 1200000, 25, 135000, 10, 90000),
+(16, '2024-05-02', '4', 1800000, 23, 124200, 8, 140000);
 
 -- --------------------------------------------------------
 
@@ -815,8 +873,7 @@ ALTER TABLE `factura_detalle`
 --
 ALTER TABLE `nomina`
   ADD PRIMARY KEY (`cod_nomina`),
-  ADD KEY `fecha_nomina` (`fecha_nomina`),
-  ADD KEY `empleado_cod` (`empleado_cod`);
+  ADD KEY `fecha_nomina` (`fecha_nomina`);
 
 --
 -- Indices de la tabla `productos`
@@ -908,7 +965,7 @@ ALTER TABLE `factura_detalle`
 -- AUTO_INCREMENT de la tabla `nomina`
 --
 ALTER TABLE `nomina`
-  MODIFY `cod_nomina` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `cod_nomina` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
@@ -986,12 +1043,6 @@ ALTER TABLE `factura_cabeza`
 ALTER TABLE `factura_detalle`
   ADD CONSTRAINT `factura_detalle_ibfk_1` FOREIGN KEY (`factura_cod`) REFERENCES `factura_cabeza` (`cod_factura`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `factura_detalle_ibfk_2` FOREIGN KEY (`producto_cod`) REFERENCES `productos` (`cod_producto`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Filtros para la tabla `nomina`
---
-ALTER TABLE `nomina`
-  ADD CONSTRAINT `nomina_ibfk_1` FOREIGN KEY (`empleado_cod`) REFERENCES `empleado` (`cod_empleado`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `productos`
