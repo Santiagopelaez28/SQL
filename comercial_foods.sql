@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 02-05-2024 a las 17:03:47
+-- Tiempo de generación: 09-05-2024 a las 16:55:14
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -63,6 +63,57 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `contar_productos` (IN `dato` VARCHA
         SELECT COUNT(*)
         FROM productos
         WHERE productos.proveedor_cod=dato);
+END$$
+
+--
+-- Funciones
+--
+CREATE DEFINER=`root`@`localhost` FUNCTION `prom_edad` () RETURNS INT(11)  BEGIN
+DECLARE suma int;
+DECLARE total int;
+DECLARE edadp int;
+DECLARE i int;
+DECLARE c1 CURSOR FOR SELECT edad FROM cliente;
+SET suma= 0;
+SET i = 1;
+SET total = 0;
+SELECT COUNT(*) INTO total FROM cliente;
+OPEN c1;
+WHILE i <= total DO
+	FETCH c1 INTO edadp;
+    SET suma = suma + edadp;
+    SET i = i + 1;
+END WHILE;
+CLOSE c1;
+RETURN suma / total;
+END$$
+
+CREATE DEFINER=`root`@`localhost` FUNCTION `salario_mayor2` () RETURNS VARCHAR(100) CHARSET utf8mb4 COLLATE utf8mb4_general_ci  BEGIN 
+DECLARE var_codemp int;
+DECLARE var_nombre varchar(25);
+DECLARE var_apellido varchar(25);
+DECLARE var_netop decimal(10,0);
+DECLARE mayor decimal(10,0);
+DECLARE total int;
+DECLARE i int;
+DECLARE resultado varchar(100);
+DECLARE c1 CURSOR FOR SELECT t1.empleado_cod, t2.nombre1, t2.apellido1, t1.neto_pagar FROM nomina t1 
+INNER JOIN empleado t2 ON t1.empleado_cod = t2.cod_empleado;
+SET mayor = 0;
+SET i = 1;
+SET total = 0;
+SELECT COUNT(*) INTO total FROM nomina;
+OPEN c1;
+WHILE i <= total DO 
+    FETCH c1 INTO var_codemp, var_nombre, var_apellido, var_netop;
+    IF var_netop > mayor THEN
+    SET resultado = CONCAT(var_codemp, ' ', var_nombre, ' ', var_apellido, ' ', var_netop);
+    SET mayor = var_netop;
+    END IF;
+    SET i = i + 1;
+END WHILE;
+CLOSE c1;
+RETURN resultado;
 END$$
 
 DELIMITER ;
@@ -776,6 +827,120 @@ INSERT INTO `tipomov` (`cod_tipomov`, `nombre_mov`) VALUES
 (2, 'Compra'),
 (3, 'Salida V'),
 (4, 'Devolucion V');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `vista_cargo_empleado`
+-- (Véase abajo para la vista actual)
+--
+CREATE TABLE `vista_cargo_empleado` (
+`nombre_cargo` varchar(25)
+,`salario` decimal(10,0)
+,`nombre1` varchar(25)
+,`apellido1` varchar(25)
+,`no_documento` varchar(25)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `vista_empleado_clientes`
+-- (Véase abajo para la vista actual)
+--
+CREATE TABLE `vista_empleado_clientes` (
+`Nombres_empleado` varchar(52)
+,`Documento_empleado` varchar(25)
+,`Nombres_clientes` varchar(52)
+,`Documento_cliente` varchar(25)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `vista_proovedor_producto`
+-- (Véase abajo para la vista actual)
+--
+CREATE TABLE `vista_proovedor_producto` (
+`razon_social` varchar(50)
+,`descripcion` varchar(50)
+,`valor_compra` decimal(10,0)
+,`valor_venta` decimal(10,0)
+,`existencia` bigint(20)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `vista_tipomov_entrada`
+-- (Véase abajo para la vista actual)
+--
+CREATE TABLE `vista_tipomov_entrada` (
+`nombre_mov` varchar(25)
+,`fecha_entrada` date
+,`proveedor_cod` int(11)
+,`empleado_cod` int(11)
+,`forma_pago` enum('efectivo','nequi','credito')
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `vista_tipomov_factura`
+-- (Véase abajo para la vista actual)
+--
+CREATE TABLE `vista_tipomov_factura` (
+`nombre_mov` varchar(25)
+,`fecha_factura` date
+,`cliente_cod` int(11)
+,`empleado_cod` int(11)
+,`forma_pago` enum('nequi','efectivo','credito')
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `vista_cargo_empleado`
+--
+DROP TABLE IF EXISTS `vista_cargo_empleado`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_cargo_empleado`  AS SELECT `t1`.`nombre_cargo` AS `nombre_cargo`, `t1`.`salario` AS `salario`, `t2`.`nombre1` AS `nombre1`, `t2`.`apellido1` AS `apellido1`, `t2`.`no_documento` AS `no_documento` FROM (`cargo` `t1` join `empleado` `t2`) WHERE `t1`.`cod_cargo` = `t2`.`cargo_cod` ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `vista_empleado_clientes`
+--
+DROP TABLE IF EXISTS `vista_empleado_clientes`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_empleado_clientes`  AS SELECT concat(`t1`.`nombre1`,'  ',`t1`.`apellido1`) AS `Nombres_empleado`, concat(`t1`.`no_documento`) AS `Documento_empleado`, concat(`t2`.`nombre1`,'  ',`t2`.`apellido1`) AS `Nombres_clientes`, concat(`t1`.`no_documento`) AS `Documento_cliente` FROM (`empleado` `t1` join `cliente` `t2`) WHERE `t1`.`cod_empleado` = `t2`.`empleado_cod` ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `vista_proovedor_producto`
+--
+DROP TABLE IF EXISTS `vista_proovedor_producto`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_proovedor_producto`  AS SELECT `t1`.`razon_social` AS `razon_social`, `t2`.`descripcion` AS `descripcion`, `t2`.`valor_compra` AS `valor_compra`, `t2`.`valor_venta` AS `valor_venta`, `t2`.`existencia` AS `existencia` FROM (`proveedor` `t1` join `productos` `t2`) WHERE `t1`.`cod_proveedor` = `t2`.`proveedor_cod` ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `vista_tipomov_entrada`
+--
+DROP TABLE IF EXISTS `vista_tipomov_entrada`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_tipomov_entrada`  AS SELECT `t1`.`nombre_mov` AS `nombre_mov`, `t2`.`fecha_entrada` AS `fecha_entrada`, `t2`.`proveedor_cod` AS `proveedor_cod`, `t2`.`empleado_cod` AS `empleado_cod`, `t2`.`forma_pago` AS `forma_pago` FROM (`tipomov` `t1` join `entrada_cabeza` `t2`) WHERE `t1`.`cod_tipomov` = `t2`.`tipomov_cod` ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `vista_tipomov_factura`
+--
+DROP TABLE IF EXISTS `vista_tipomov_factura`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_tipomov_factura`  AS SELECT `t1`.`nombre_mov` AS `nombre_mov`, `t2`.`fecha_factura` AS `fecha_factura`, `t2`.`cliente_cod` AS `cliente_cod`, `t2`.`empleado_cod` AS `empleado_cod`, `t2`.`forma_pago` AS `forma_pago` FROM (`tipomov` `t1` join `factura_cabeza` `t2`) WHERE `t1`.`cod_tipomov` = `t2`.`tipomov_cod` ;
 
 --
 -- Índices para tablas volcadas
