@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 09-05-2024 a las 16:55:14
+-- Tiempo de generación: 16-05-2024 a las 16:52:50
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -36,6 +36,51 @@ UPDATE cartera SET pagada='S'
 WHERE saldo <= 0;
 END$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `actualiza_entrada` ()   BEGIN
+    DECLARE var_producod INT;
+    DECLARE var_cantidad INT;
+    DECLARE var_final INT DEFAULT 0;
+
+    DECLARE c1 CURSOR FOR SELECT producto_cod, cantidad FROM entrada_detalle;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET var_final = 1;
+
+    OPEN c1;
+
+    bucle: LOOP
+        FETCH c1 INTO var_producod, var_cantidad;
+        IF var_final = 1 THEN
+            LEAVE bucle;
+        END IF;
+        
+        UPDATE productos 
+        SET existencia = existencia + var_cantidad
+        WHERE cod_producto = var_producod;
+    END LOOP bucle;
+    SELECT cod_producto, existencia
+    FROM productos;
+    CLOSE c1;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `actualiza_salida` ()   BEGIN
+DECLARE var_producod int;
+DECLARE var_cantidad int;
+DECLARE var_final int DEFAULT 0;
+DECLARE c1 CURSOR FOR SELECT producto_cod, cantidad FROM factura_detalle;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET var_final = 1;
+OPEN c1;
+bucle:LOOP
+    FETCH c1 INTO var_producod, var_cantidad;
+    IF var_final = 1 THEN 
+    LEAVE bucle;
+    END IF;
+    UPDATE productos SET existencia = existencia - var_cantidad
+    WHERE cod_producto = var_producod;
+END LOOP bucle;
+SELECT cod_producto, existencia FROM productos;
+
+CLOSE c1;
+END$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `calcula_nomina` (IN `fechanom` DATE, IN `cod_emp` INT, IN `salario` DECIMAL(10,0), IN `diastb` INT, IN `nhrn` INT, IN `presta` DECIMAL(10,0))   BEGIN
     DECLARE smiv DECIMAL(10,0);
     DECLARE auxtte DECIMAL(10,0);
@@ -63,6 +108,29 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `contar_productos` (IN `dato` VARCHA
         SELECT COUNT(*)
         FROM productos
         WHERE productos.proveedor_cod=dato);
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `inactiva_cliente` ()   BEGIN
+DECLARE var_codcli int;
+DECLARE var_saldo decimal(10,0);
+DECLARE var_dias int;
+DECLARE var_final int;
+DECLARE c1 CURSOR FOR SELECT cliente_cod, dias_mora, saldo FROM cartera;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET var_final = 1;
+OPEN c1;
+bucle:LOOP
+    FETCH c1 INTO var_codcli, var_dias, var_saldo;
+    IF var_final = 1 THEN
+    LEAVE bucle;
+    END IF;
+    IF var_dias > 0 AND var_saldo > 0 THEN
+    UPDATE cliente SET activo = "I"
+    WHERE cod_cliente = var_codcli;
+    END IF;
+    END LOOP bucle;
+    SELECT cod_cliente, activo FROM cliente
+    WHERE activo = "I";
+CLOSE c1;
 END$$
 
 --
@@ -237,13 +305,13 @@ INSERT INTO `cliente` (`cod_cliente`, `nombre1`, `nombre2`, `apellido1`, `apelli
 (5, 'Eliana', 'Marcela', 'Ramírez', 'Guerrero', 'nit', '1222333445', 'femenino', 'Calle 181 #2-45 ', 'Barranquilla', '2024-03-14', 50, '8019053', 'viudo', 'mayorista', 'A', 5),
 (6, 'José', 'Gregorio', 'Carmona', 'Guerra', 'cc', '1091562345', 'masculino', 'Cra 3 A # 5-89', 'Barranquilla', '2024-03-14', 29, '3134409180', 'casado', 'detallista', 'A', 5),
 (7, 'Marcela', 'Eliana', 'De santis', 'Rodríguez', 'cc', '1091562348', 'femenino', 'calle 9b # 4-20', 'Cali', '2024-03-14', 35, '3108156310', 'union libre', 'mayorista', 'A', 6),
-(8, 'Daniela', '', 'Franco', 'Marulanda', 'cc', '1091562312', 'femenino', 'Carrera 56A No. 51 - 81', 'Cali', '2024-03-14', 45, '3212598228', 'union libre', 'mayorista', 'A', 6),
-(9, 'Rafael', 'Fabian', 'Cortes', 'Palacio', 'cc', '1091562336', 'masculino', 'Calle 10 No. 9 - 78 Centro', 'Medellin', '2024-03-14', 48, '7586412', 'soltero', 'mayorista', 'A', 7),
-(10, 'Camilo', 'Andres', 'Berrios', 'Bermudez', 'cc', '1091562314', 'masculino', 'Calle 24D #5676', 'Medellin', '2024-03-14', 36, '4341235', 'casado', 'mayorista', 'A', 7),
+(8, 'Daniela', '', 'Franco', 'Marulanda', 'cc', '1091562312', 'femenino', 'Carrera 56A No. 51 - 81', 'Cali', '2024-03-14', 45, '3212598228', 'union libre', 'mayorista', 'I', 6),
+(9, 'Rafael', 'Fabian', 'Cortes', 'Palacio', 'cc', '1091562336', 'masculino', 'Calle 10 No. 9 - 78 Centro', 'Medellin', '2024-03-14', 48, '7586412', 'soltero', 'mayorista', 'I', 7),
+(10, 'Camilo', 'Andres', 'Berrios', 'Bermudez', 'cc', '1091562314', 'masculino', 'Calle 24D #5676', 'Medellin', '2024-03-14', 36, '4341235', 'casado', 'mayorista', 'I', 7),
 (11, 'Francisco', 'David', 'Arias', 'Toledo', 'cc', '1091562349', 'masculino', 'calle 5b #78c 05', 'Bogota', '2024-03-14', 27, '6018954', 'casado', 'empresarial', 'A', 8),
-(12, 'Antonio', 'Giovanny', 'Merizalde', 'Arango', 'cc', '1091562103', 'masculino', 'Calle 23 #54-9', 'Barranquilla', '2024-03-14', 53, '3165846257', 'viudo', 'mayorista', 'A', 8),
-(13, 'Karen', 'Rocio', 'Restrepo', 'Acevedo', 'cc', '1091562425', 'femenino', 'cra 7a # 34-89sur', 'Barranquilla', '2024-03-14', 43, '8017936', 'viudo', 'detallista', 'A', 9),
-(14, 'David', 'Santiago', 'Lemus', 'Cock', 'nit', '1112239564', 'masculino', 'cr 5a #20-34 sur', 'Bogota', '2024-03-14', 55, '3412658975', 'soltero', 'mayorista', 'A', 9),
+(12, 'Antonio', 'Giovanny', 'Merizalde', 'Arango', 'cc', '1091562103', 'masculino', 'Calle 23 #54-9', 'Barranquilla', '2024-03-14', 53, '3165846257', 'viudo', 'mayorista', 'I', 8),
+(13, 'Karen', 'Rocio', 'Restrepo', 'Acevedo', 'cc', '1091562425', 'femenino', 'cra 7a # 34-89sur', 'Barranquilla', '2024-03-14', 43, '8017936', 'viudo', 'detallista', 'I', 9),
+(14, 'David', 'Santiago', 'Lemus', 'Cock', 'nit', '1112239564', 'masculino', 'cr 5a #20-34 sur', 'Bogota', '2024-03-14', 55, '3412658975', 'soltero', 'mayorista', 'I', 9),
 (15, 'Javier', 'Mauricio', 'Santana', 'Casadiegos', 'cc', '1233669874', 'masculino', 'CALLE 27 #58-63', 'Cali', '2024-03-14', 40, '315648301', 'casado', 'mayorista', 'A', 10),
 (16, 'Virginia', '', 'Saldarriaga', 'Salamanca', 'cc', '1556998745', 'femenino', 'cll 36 3 1-81 este', 'Medellin', '2024-03-14', 38, '4518992', 'casado', 'detallista', 'A', 10);
 
@@ -745,34 +813,34 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`cod_producto`, `descripcion`, `valor_compra`, `valor_venta`, `existencia`, `nro_lote`, `fecha_fabricacion`, `fecha_vencimiento`, `categor_cod`, `proveedor_cod`) VALUES
-(1, 'Galletas Festival Bsax12', 2000, 3000, 4000, 4089, '2023-04-01', '2024-04-01', 3, 2),
-(2, 'Galletas Ducales taco', 7000, 8000, 5000, 4088, '2023-04-01', '2024-04-01', 3, 2),
-(3, 'Bom bom bum barrax50', 3000, 3800, 3500, 4081, '2023-05-01', '2024-05-01', 4, 3),
-(4, 'Pan Blanco tajado', 4500, 5500, 5500, 4080, '2023-02-01', '2024-02-01', 2, 4),
-(5, 'Salsa de tomate frasco', 7150, 7500, 6000, 4084, '2023-06-01', '2024-06-01', 5, 7),
-(6, 'Jugo Fresa frasco', 2500, 3500, 6500, 4086, '2023-03-01', '2024-03-01', 6, 6),
-(7, 'Leche pasteurizada bsa', 4500, 5500, 7500, 4080, '2023-03-01', '2024-03-01', 1, 5),
-(8, 'Salchichas vaquera x pq', 5500, 6500, 8500, 4070, '2023-08-30', '2023-09-20', 7, 8),
-(9, 'Mortadela vaquera x pq', 7500, 8500, 9500, 4071, '2023-08-30', '2023-09-20', 7, 8),
-(10, 'Salchiperro vaquera x pq', 6500, 7500, 8500, 4072, '2023-08-30', '2023-09-20', 7, 8),
-(11, 'Salsa de soya frasco', 6050, 6500, 6500, 4079, '2023-08-20', '2024-09-20', 5, 7),
-(12, 'Salsa mayonesa frasco', 6050, 6500, 8000, 4079, '2023-08-20', '2024-09-20', 5, 7),
-(13, 'Salsa rosada frasco', 8250, 8500, 7600, 4079, '2023-08-20', '2024-09-20', 5, 7),
-(14, 'Galletas Recreo bsa', 9000, 10000, 8200, 4077, '2023-08-20', '2024-08-20', 3, 2),
-(15, 'Galletas Ducales taco', 7200, 8200, 9000, 4077, '2023-08-20', '2024-08-20', 3, 2),
-(16, 'Galletas Saltin taco', 8000, 9000, 10000, 4077, '2023-08-20', '2024-08-20', 3, 2),
-(17, 'Menta Helada Bsa', 6300, 7300, 5500, 4076, '2023-09-10', '2024-09-10', 4, 3),
-(18, 'Confites Choco Bsa', 5600, 6600, 3700, 4076, '2023-09-10', '2024-09-10', 4, 3),
-(19, 'Arequipe mum tarro', 2800, 3880, 4500, 4076, '2023-09-10', '2024-09-10', 4, 3),
-(20, 'Queso Costeño pq', 6000, 7000, 3000, 4075, '2023-09-10', '2024-09-10', 1, 5),
-(21, 'Leche Entera bsa', 8000, 9000, 5000, 4075, '2023-09-10', '2024-09-10', 1, 5),
-(22, 'Yogurt Dulce tarro', 2100, 3100, 6000, 4075, '2023-09-10', '2024-09-10', 1, 5),
-(23, 'Pan mogolla x 10 bsa', 2500, 3500, 5000, 4074, '2023-09-10', '2024-09-10', 2, 4),
-(24, 'Ponque Bimbox5 bsa', 3400, 4400, 3500, 4074, '2023-09-10', '2024-09-10', 2, 4),
-(25, 'Brownie x 5 bsa', 4200, 5200, 7000, 4074, '2023-09-10', '2024-09-10', 2, 4),
-(26, 'Agua Cristal bote', 1800, 2800, 8500, 4073, '2023-09-10', '2024-09-10', 6, 6),
-(27, 'Jugo Mora Frasco', 2500, 3500, 6300, 4073, '2023-09-10', '2024-09-10', 6, 6),
-(28, 'Pony Malta litro', 6000, 7000, 8400, 4073, '2023-09-10', '2024-09-10', 6, 6);
+(1, 'Galletas Festival Bsax12', 2000, 3000, 4380, 4089, '2023-04-01', '2024-04-01', 3, 2),
+(2, 'Galletas Ducales taco', 7000, 8000, 7275, 4088, '2023-04-01', '2024-04-01', 3, 2),
+(3, 'Bom bom bum barrax50', 3000, 3800, 5432, 4081, '2023-05-01', '2024-05-01', 4, 3),
+(4, 'Pan Blanco tajado', 4500, 5500, 7223, 4080, '2023-02-01', '2024-02-01', 2, 4),
+(5, 'Salsa de tomate frasco', 7150, 7500, 8526, 4084, '2023-06-01', '2024-06-01', 5, 7),
+(6, 'Jugo Fresa frasco', 2500, 3500, 6480, 4086, '2023-03-01', '2024-03-01', 6, 6),
+(7, 'Leche pasteurizada bsa', 4500, 5500, 7714, 4080, '2023-03-01', '2024-03-01', 1, 5),
+(8, 'Salchichas vaquera x pq', 5500, 6500, 12045, 4070, '2023-08-30', '2023-09-20', 7, 8),
+(9, 'Mortadela vaquera x pq', 7500, 8500, 9924, 4071, '2023-08-30', '2023-09-20', 7, 8),
+(10, 'Salchiperro vaquera x pq', 6500, 7500, 9830, 4072, '2023-08-30', '2023-09-20', 7, 8),
+(11, 'Salsa de soya frasco', 6050, 6500, 7335, 4079, '2023-08-20', '2024-09-20', 5, 7),
+(12, 'Salsa mayonesa frasco', 6050, 6500, 8217, 4079, '2023-08-20', '2024-09-20', 5, 7),
+(13, 'Salsa rosada frasco', 8250, 8500, 7704, 4079, '2023-08-20', '2024-09-20', 5, 7),
+(14, 'Galletas Recreo bsa', 9000, 10000, 8686, 4077, '2023-08-20', '2024-08-20', 3, 2),
+(15, 'Galletas Ducales taco', 7200, 8200, 9883, 4077, '2023-08-20', '2024-08-20', 3, 2),
+(16, 'Galletas Saltin taco', 8000, 9000, 10735, 4077, '2023-08-20', '2024-08-20', 3, 2),
+(17, 'Menta Helada Bsa', 6300, 7300, 5781, 4076, '2023-09-10', '2024-09-10', 4, 3),
+(18, 'Confites Choco Bsa', 5600, 6600, 4135, 4076, '2023-09-10', '2024-09-10', 4, 3),
+(19, 'Arequipe mum tarro', 2800, 3880, 5228, 4076, '2023-09-10', '2024-09-10', 4, 3),
+(20, 'Queso Costeño pq', 6000, 7000, 3232, 4075, '2023-09-10', '2024-09-10', 1, 5),
+(21, 'Leche Entera bsa', 8000, 9000, 5328, 4075, '2023-09-10', '2024-09-10', 1, 5),
+(22, 'Yogurt Dulce tarro', 2100, 3100, 6523, 4075, '2023-09-10', '2024-09-10', 1, 5),
+(23, 'Pan mogolla x 10 bsa', 2500, 3500, 5938, 4074, '2023-09-10', '2024-09-10', 2, 4),
+(24, 'Ponque Bimbox5 bsa', 3400, 4400, 4022, 4074, '2023-09-10', '2024-09-10', 2, 4),
+(25, 'Brownie x 5 bsa', 4200, 5200, 7450, 4074, '2023-09-10', '2024-09-10', 2, 4),
+(26, 'Agua Cristal bote', 1800, 2800, 9052, 4073, '2023-09-10', '2024-09-10', 6, 6),
+(27, 'Jugo Mora Frasco', 2500, 3500, 6770, 4073, '2023-09-10', '2024-09-10', 6, 6),
+(28, 'Pony Malta litro', 6000, 7000, 8622, 4073, '2023-09-10', '2024-09-10', 6, 6);
 
 -- --------------------------------------------------------
 
@@ -957,7 +1025,8 @@ ALTER TABLE `cargo`
 -- Indices de la tabla `cartera`
 --
 ALTER TABLE `cartera`
-  ADD PRIMARY KEY (`cod_factura`);
+  ADD PRIMARY KEY (`cod_factura`),
+  ADD KEY `fkcodcliente` (`cliente_cod`);
 
 --
 -- Indices de la tabla `categoria`
@@ -1158,6 +1227,7 @@ ALTER TABLE `tipomov`
 -- Filtros para la tabla `cartera`
 --
 ALTER TABLE `cartera`
+  ADD CONSTRAINT `fkcodcliente` FOREIGN KEY (`cliente_cod`) REFERENCES `cliente` (`cod_cliente`),
   ADD CONSTRAINT `fkcodfactura` FOREIGN KEY (`cod_factura`) REFERENCES `factura_cabeza` (`cod_factura`);
 
 --
